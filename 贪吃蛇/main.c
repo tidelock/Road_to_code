@@ -9,7 +9,7 @@ int main()
     char ch;
     srand((unsigned int)time(NULL));
     Init_a(a);
-    snack *s_first = (snack *)malloc(sizeof(snack)), *temp = (snack *)malloc(sizeof(snack));
+    snack *s_first = (snack *)malloc(sizeof(snack));//忘记释放空间了，可以自行编写释放的代码
     Init_snack(s_first);
     a[10][15] = a[10][14] = 'S';
 
