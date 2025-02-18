@@ -1,0 +1,6 @@
+".\Objects\main.obj",
+".\Objects\func.obj",
+".\Objects\spi.obj",
+".\Objects\LIS3DH.obj" 
+TO ".\Objects\main" 
+PRINT(".\Listings\main.m51") RAMSIZE(256) 

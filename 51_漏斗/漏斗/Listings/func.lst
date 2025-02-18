@@ -1,0 +1,347 @@
+C51 COMPILER V9.54   FUNC                                                                  02/15/2025 22:00:38 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE FUNC
+OBJECT MODULE PLACED IN .\Objects\func.obj
+COMPILER INVOKED BY: D:\Keil_5\C51\BIN\C51.EXE func.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\func.
+                    -lst) TABS(2) OBJECT(.\Objects\func.obj)
+
+line level    source
+
+   1          #include <STC8H.H>
+   2          #include "func.h"
+   3          #include "stdlib.h"
+   4          #include "LIS3DH.h"
+   5          #include "spi.h"
+   6          
+   7          light x[27] = {0};
+   8          extern char direction;
+   9          int clk1=0,clk2=0,clk3;
+  10          idata char rand_array[26];
+  11          
+  12          void init()
+  13          {
+  14   1          char i;
+  15   1      
+  16   1          // 以下是配置IO口的模式
+  17   1          IO_init();
+  18   1      
+  19   1          // 以下是SPI通信的初始化
+  20   1          spi_init();
+  21   1      
+  22   1          // 以下是陀螺仪的初始化
+  23   1          lis3dh_init();
+  24   1      
+  25   1          // 以下是配置定时器0方式0的中断
+  26   1          time_init();
+  27   1      
+  28   1          // 以下是沙子的初始化位置
+  29   1          for (i = 0; i < 12; i++) // 有沙子的部分
+  30   1              x[i].exist = 1;
+  31   1          for (i = 12; i < 26; i++) // 没有沙子的部分
+  32   1              x[i].exist = 0;
+  33   1          x[26].exist = 1; // 表示沙漏的边缘
+  34   1      
+  35   1          // 以下是获得随机顺序的数列
+  36   1          for (i = 0; i < 26; i++)
+  37   1              rand_array[i] = i;
+  38   1      
+  39   1          // 以下是配置ADC转换，从不稳定的引脚读出产生随机数的种子
+  40   1          ADCTIM = 0x3F;
+  41   1          ADCCFG = 0x0F;
+  42   1          ADC_CONTR = 0x80;
+  43   1      }
+  44          
+  45          void get_rand_array()
+  46          {
+  47   1          char i;
+  48   1          char num, temp;
+  49   1          for (i = 0; i < 26; i++)
+  50   1          {
+  51   2              ADC_CONTR |= 0x40;
+  52   2              while (!ADC_CONTR & 0x20);
+  53   2              ADC_CONTR &= ~0x20;
+  54   2              srand(clk3);
+C51 COMPILER V9.54   FUNC                                                                  02/15/2025 22:00:38 PAGE 2   
+
+  55   2              num = rand() % 26;
+  56   2              temp = rand_array[num];
+  57   2              rand_array[num] = rand_array[i];
+  58   2              rand_array[i] = temp;
+  59   2          }
+  60   1      }
+  61          
+  62          void IO_init() // IO口均配置成双向口模式
+  63          {
+  64   1          P_SW2 |= 0x80;
+  65   1          P0M0 = 0x00;
+  66   1          P0M1 = 0x00;
+  67   1          P1M0 = 0x00;
+  68   1          P1M1 = 0x01;
+  69   1          P2M0 = 0x00;
+  70   1          P2M1 = 0x00;
+  71   1          P3M0 = 0x00;
+  72   1          P3M1 = 0x00;
+  73   1      }
+  74          
+  75          void frame()
+  76          {
+  77   1          switch (direction)
+  78   1          {
+  79   2          case Down:
+  80   2          {
+  81   3              x[0].left = 3;x[0].mid = 7;x[0].right = 4;
+  82   3              x[1].left = 4;x[1].mid = 8;x[1].right = 5;
+  83   3              x[2].left = 5;x[2].mid = 9;x[2].right = 6;
+  84   3              x[3].left = 26;x[3].mid = 26;x[3].right = 7;
+  85   3              x[4].left = 7;x[4].mid = 10;x[4].right = 8;
+  86   3              x[5].left = 8;x[5].mid = 11;x[5].right = 9;
+  87   3              x[6].left = 9;x[6].mid = 26;x[6].right = 26;
+  88   3              x[7].left = 26;x[7].mid = 26;x[7].right = 10;
+  89   3              x[8].left = 10;x[8].mid = 12;x[8].right = 11;
+  90   3              x[9].left = 11;x[9].mid = 26;x[9].right = 26;
+  91   3              x[10].left = 26;x[10].mid = 26;x[10].right = 12;
+  92   3              x[11].left = 12;x[11].mid = 26;x[11].right = 26;
+  93   3              x[12].left = 26;x[12].mid = 13;x[12].right = 26;
+  94   3              x[13].left = 14;x[13].mid = 17;x[13].right = 15;
+  95   3              x[14].left = 16;x[14].mid = 20;x[14].right = 17;
+  96   3              x[15].left = 17;x[15].mid = 21;x[15].right = 18;
+  97   3              x[16].left = 19;x[16].mid = 23;x[16].right = 20;
+  98   3              x[17].left = 20;x[17].mid = 24;x[17].right = 21;
+  99   3              x[18].left = 21;x[18].mid = 25;x[18].right = 22;
+ 100   3              x[19].left = 26;x[19].mid = 26;x[19].right = 23;
+ 101   3              x[20].left = 23;x[20].mid = 26;x[20].right = 24;
+ 102   3              x[21].left = 24;x[21].mid = 26;x[21].right = 25;
+ 103   3              x[22].left = 25;x[22].mid = 26;x[22].right = 26;
+ 104   3              x[23].left = 26;x[23].mid = 26;x[23].right = 26;
+ 105   3              x[24].left = 26;x[24].mid = 26;x[24].right = 26;
+ 106   3              x[25].left = 26;x[25].mid = 26;x[25].right = 26;
+ 107   3          }
+ 108   2          break;
+ 109   2          case Up:
+ 110   2          {
+ 111   3              x[0].left = 26;x[0].mid = 26;x[0].right = 26;
+ 112   3              x[1].left = 26;x[1].mid = 26;x[1].right = 26;
+ 113   3              x[2].left = 26;x[2].mid = 26;x[2].right = 26;
+ 114   3              x[3].left = 0;x[3].mid = 26;x[3].right = 26;
+ 115   3              x[4].left = 1;x[4].mid = 26;x[4].right = 0;
+ 116   3              x[5].left = 2;x[5].mid = 26;x[5].right = 1;
+C51 COMPILER V9.54   FUNC                                                                  02/15/2025 22:00:38 PAGE 3   
+
+ 117   3              x[6].left = 26;x[6].mid = 26;x[6].right = 2;
+ 118   3              x[7].left = 4;x[7].mid = 0;x[7].right = 3;
+ 119   3              x[8].left = 5;x[8].mid = 1;x[8].right = 4;
+ 120   3              x[9].left = 6;x[9].mid = 2;x[9].right = 5;
+ 121   3              x[10].left = 8;x[10].mid = 4;x[10].right = 7;
+ 122   3              x[11].left = 9;x[11].mid = 5;x[11].right = 8;
+ 123   3              x[12].left = 11;x[12].mid = 8;x[12].right = 10;
+ 124   3              x[13].left = 26;x[13].mid = 12;x[13].right = 26;
+ 125   3              x[14].left = 13;x[14].mid = 26;x[14].right = 26;
+ 126   3              x[15].left = 26;x[15].mid = 26;x[15].right = 13;
+ 127   3              x[16].left = 14;x[16].mid = 26;x[16].right = 26;
+ 128   3              x[17].left = 15;x[17].mid = 13;x[17].right = 14;
+ 129   3              x[18].left = 26;x[18].mid = 26;x[18].right = 15;
+ 130   3              x[19].left = 16;x[19].mid = 26;x[19].right = 26;
+ 131   3              x[20].left = 17;x[20].mid = 14;x[20].right = 16;
+ 132   3              x[21].left = 18;x[21].mid = 15;x[21].right = 17;
+ 133   3              x[22].left = 26;x[22].mid = 26;x[22].right = 18;
+ 134   3              x[23].left = 20;x[23].mid = 16;x[23].right = 19;
+ 135   3              x[24].left = 21;x[24].mid = 17;x[24].right = 20;
+ 136   3              x[25].left = 22;x[25].mid = 18;x[25].right = 21;
+ 137   3          }
+ 138   2              break;
+ 139   2          case Left:
+ 140   2          {
+ 141   3              x[0].left = 26;x[0].mid = 26;x[0].right = 3;
+ 142   3              x[1].left = 26;x[1].mid = 0;x[1].right = 4;
+ 143   3              x[2].left = 26;x[2].mid = 1;x[2].right = 5;
+ 144   3              x[3].left = 26;x[3].mid = 26;x[3].right = 26;
+ 145   3              x[4].left = 0;x[4].mid = 3;x[4].right = 7;
+ 146   3              x[5].left = 1;x[5].mid = 4;x[5].right = 8;
+ 147   3              x[6].left = 2;x[6].mid = 5;x[6].right = 9;
+ 148   3              x[7].left = 3;x[7].mid = 26;x[7].right = 26;
+ 149   3              x[8].left = 4;x[8].mid = 7;x[8].right = 10;
+ 150   3              x[9].left = 5;x[9].mid = 8;x[9].right = 11;
+ 151   3              x[10].left = 7;x[10].mid = 26;x[10].right = 26;
+ 152   3              x[11].left = 8;x[11].mid = 10;x[11].right = 12;
+ 153   3              x[12].left = 10;x[12].mid = 26;x[12].right = 26;
+ 154   3              x[13].left = 26;x[13].mid = 26;x[13].right = 14;
+ 155   3              x[14].left = 26;x[14].mid = 26;x[14].right = 16;
+ 156   3              x[15].left = 13;x[15].mid = 14;x[15].right = 17;
+ 157   3              x[16].left = 26;x[16].mid = 26;x[16].right = 19;
+ 158   3              x[17].left = 14;x[17].mid = 16;x[17].right = 20;
+ 159   3              x[18].left = 15;x[18].mid = 17;x[18].right = 21;
+ 160   3              x[19].left = 26;x[19].mid = 26;x[19].right = 26;
+ 161   3              x[20].left = 16;x[20].mid = 19;x[20].right = 23;
+ 162   3              x[21].left = 17;x[21].mid = 20;x[21].right = 24;
+ 163   3              x[22].left = 18;x[22].mid = 21;x[22].right = 25;
+ 164   3              x[23].left = 19;x[23].mid = 26;x[23].right = 26;
+ 165   3              x[24].left = 20;x[24].mid = 23;x[24].right = 26;
+ 166   3              x[25].left = 21;x[25].mid = 24;x[25].right = 26;
+ 167   3          }
+ 168   2              break;
+ 169   2          case Right:
+ 170   2          {
+ 171   3              x[0].left = 4;x[0].mid = 1;x[0].right = 26;
+ 172   3              x[1].left = 5;x[1].mid = 2;x[1].right = 26;
+ 173   3              x[2].left = 6;x[2].mid = 26;x[2].right = 26;
+ 174   3              x[3].left = 7;x[3].mid = 4;x[3].right = 0;
+ 175   3              x[4].left = 8;x[4].mid = 5;x[4].right = 1;
+ 176   3              x[5].left = 9;x[5].mid = 6;x[5].right = 2;
+ 177   3              x[6].left = 26;x[6].mid = 26;x[6].right = 26;
+ 178   3              x[7].left = 10;x[7].mid = 8;x[7].right = 4;
+C51 COMPILER V9.54   FUNC                                                                  02/15/2025 22:00:38 PAGE 4   
+
+ 179   3              x[8].left = 11;x[8].mid = 9;x[8].right = 5;
+ 180   3              x[9].left = 26;x[9].mid = 26;x[9].right = 6;
+ 181   3              x[10].left = 12;x[10].mid = 11;x[10].right = 8;
+ 182   3              x[11].left = 26;x[11].mid = 26;x[11].right = 9;
+ 183   3              x[12].left = 26;x[12].mid = 26;x[12].right = 11;
+ 184   3              x[13].left = 15;x[13].mid = 26;x[13].right = 26;
+ 185   3              x[14].left = 17;x[14].mid = 15;x[14].right = 13;
+ 186   3              x[15].left = 18;x[15].mid = 26;x[15].right = 26;
+ 187   3              x[16].left = 20;x[16].mid = 17;x[16].right = 14;
+ 188   3              x[17].left = 21;x[17].mid = 18;x[17].right = 15;
+ 189   3              x[18].left = 22;x[18].mid = 26;x[18].right = 26;
+ 190   3              x[19].left = 23;x[19].mid = 20;x[19].right = 16;
+ 191   3              x[20].left = 24;x[20].mid = 21;x[20].right = 17;
+ 192   3              x[21].left = 25;x[21].mid = 22;x[21].right = 18;
+ 193   3              x[22].left = 26;x[22].mid = 26;x[22].right = 26;
+ 194   3              x[23].left = 26;x[23].mid = 24;x[23].right = 20;
+ 195   3              x[24].left = 26;x[24].mid = 25;x[24].right = 21;
+ 196   3              x[25].left = 26;x[25].mid = 26;x[25].right = 22;
+ 197   3          }
+ 198   2              break;
+ 199   2          }
+ 200   1      }
+ 201          
+ 202          void next_direction()
+ 203          {
+ 204   1          char i1,i;
+ 205   1          char a;
+ 206   1        get_rand_array();
+ 207   1          for (i1 = 0; i1 <26; i1++)
+ 208   1          {
+ 209   2              i=rand_array[i1];
+ 210   2              if (!x[i].exist)
+ 211   2                  continue;
+ 212   2      
+ 213   2              a = x[x[i].left].exist * 4 + x[x[i].mid].exist * 2 + x[x[i].right].exist;
+ 214   2              x[i].exist = 0;
+ 215   2              switch (a)
+ 216   2              {
+ 217   3              case 0: // 000
+ 218   3                  x[x[i].mid].exist = 1;
+ 219   3                  break;
+ 220   3              case 1: // 001
+ 221   3                  x[x[i].left].exist = 1;
+ 222   3                  break;
+ 223   3              case 2: // 010
+ 224   3                  ADC_CONTR |= 0x40;
+ 225   3                  while (!ADC_CONTR & 0x20);
+ 226   3                  ADC_CONTR &= ~0x20;
+ 227   3                  srand(clk3);
+ 228   3                  rand() % 2 ? (x[x[i].left].exist = 1) : (x[x[i].right].exist = 1);
+ 229   3                  break;
+ 230   3              case 3: // 011
+ 231   3                  x[x[i].left].exist = 1;
+ 232   3                  break;
+ 233   3              case 4: // 100
+ 234   3                  x[x[i].right].exist = 1;
+ 235   3                  break;
+ 236   3              case 5: // 101
+ 237   3                  x[i].exist = 1;
+ 238   3                  break;
+ 239   3              case 6: // 110
+ 240   3                  x[x[i].right].exist = 1;
+C51 COMPILER V9.54   FUNC                                                                  02/15/2025 22:00:38 PAGE 5   
+
+ 241   3                  break;
+ 242   3              case 7: // 111
+ 243   3                  x[i].exist = 1;
+ 244   3                  break;
+ 245   3      
+ 246   3              default:
+ 247   3                  break;
+ 248   3              }
+ 249   2          }
+ 250   1      }
+ 251          
+ 252          void show_light() // 用4个74HC595够了吧
+ 253          {
+ 254   1          char i;
+ 255   1          HC595_en = 1;
+ 256   1          HC595_storage = 0;
+ 257   1          for (i = 25; i > -1; i--) // clk上升沿移位，下降沿不变
+ 258   1          {
+ 259   2              HC595_clk = 0;
+ 260   2              x[i].exist ? (HC595_din = 1) : (HC595_din = 0);
+ 261   2              HC595_clk = 1;
+ 262   2          }
+ 263   1          HC595_storage = 1;
+ 264   1          HC595_en = 0;
+ 265   1      }
+ 266          
+ 267          void time_init()
+ 268          {
+ 269   1          TMOD = 0x00;//使用定时器的模式0，16位自动重载
+ 270   1          TH0=0xFC;
+ 271   1          TL0=0x66;
+ 272   1          TR0=1;
+ 273   1          ET0=1;
+ 274   1          EA=1;
+ 275   1      }
+ 276          
+ 277          void time_IR() interrupt 1 // 使用定时器0  1ms进入一次(11.0592)
+ 278          {
+ 279   1          int clk2_end;
+ 280   1          clk1++;
+ 281   1          clk2++;
+ 282   1          clk3++;
+ 283   1          if (clk1 == 20) // 每0.1秒刷新
+ 284   1          {
+ 285   2              frame();
+ 286   2              next_direction();
+ 287   2              clk1 = 0;
+ 288   2          }
+ 289   1      
+ 290   1          clk2_end = 500; // 一分钟
+ 291   1          // if (!P1 ^ 0)
+ 292   1          //     clk2_end = 2500; // 五分钟
+ 293   1          // if (!P1 ^ 1)
+ 294   1          //     clk2_end = 5000; // 十分钟
+ 295   1          // if (!P1 ^ 2)
+ 296   1          //     clk2_end = 7500; // 十五分钟
+ 297   1      
+ 298   1          if (clk2 == clk2_end)     // 每1秒瓶颈出掉落沙子
+ 299   1          {
+ 300   2              clk2 = 0;
+ 301   2              if (x[12].exist && x[12].mid == 13)
+ 302   2              {
+C51 COMPILER V9.54   FUNC                                                                  02/15/2025 22:00:38 PAGE 6   
+
+ 303   3                  x[12].exist = 0;
+ 304   3                  x[13].exist = 1;
+ 305   3              }
+ 306   2              if (x[13].exist && x[13].mid == 12)
+ 307   2              {
+ 308   3                  x[12].exist = 1;
+ 309   3                  x[13].exist = 0;
+ 310   3              }
+ 311   2          }
+ 312   1          show_light();
+ 313   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   3196    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     87       3
+   IDATA SIZE       =     26    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
